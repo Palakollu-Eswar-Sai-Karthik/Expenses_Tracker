@@ -5,11 +5,18 @@ expenses = []
 def design():
     for i in range(17):
         print("=",end="")
+
+def max_id()->int:
+    max_value = 0
+    for i in expenses:
+        if i["id"] > max_value:
+            max_value = i["id"]
+    return max_value
         
 def AddExpense():
     user = {}
-    length = len(expenses)
-    user["id"]=length+1
+    id_value = max_id()
+    user["id"] = id_value + 1
     while True:
         try:
             amount = float(input("Enter your expense amount: "))
@@ -23,7 +30,7 @@ def AddExpense():
     while True:       
         category=input("Enter the category of the expense: ")
         if category:
-            user["category"] = category
+            user["category"] = category.lower()
             description=input("Enter the description of the expense: ")
             if description:
                 user["description"] = description
@@ -69,7 +76,7 @@ def UpdateExpense():
             while True:       
                 updatedcategory=input("Enter the category of the expense: ")
                 if updatedcategory:
-                    i["category"]= updatedcategory
+                    i["category"]= updatedcategory.lower()
                     updateddescription=input("Enter the description of the expense: ")
                     if updateddescription:
                         i["description"] = updateddescription
@@ -109,9 +116,9 @@ def ViewTotalExpenses():
 
 def FilterbyCategory():
     found = False
-    filter = input("Enter the category: ")
+    search_category = input("Enter the category: ").lower()
     for i in expenses:
-        if i["category"] == filter:
+        if i["category"] == search_category:
             found = True
             print(f"{i['id']}\t{i['amount']}\t\t{i['category']}\t\t{i['description']}")
     if not found:
