@@ -15,11 +15,23 @@ def AddExpense():
             amount = float(input("Enter your expense amount: "))
             if amount > 0:
                 user["amount"]=amount
-            break
+                break
+            else:
+                print("Amount must be greater than 0")
         except ValueError:
-            print("Please enter a valid number")        
-    user["category"]=input("Enter the category of the expense: ")
-    user["description"]=input("Enter the description of the expense: ")
+            print("Please enter a valid number") 
+    while True:       
+        category=input("Enter the category of the expense: ")
+        if category:
+            user["category"] = category
+            description=input("Enter the description of the expense: ")
+            if description:
+                user["description"] = description
+                break
+            else:
+                print("Description cannot be empty")
+        else:
+            print("Category cannot be empty")    
     expenses.append(user)
     
 def ViewExpenses():
@@ -31,9 +43,9 @@ def ViewExpenses():
         print("\n   EXPENSES")
         design()
         print("\n")
-        print("ID\tAmount\t\tCategory\t\tDescription")
+        print(f"{'ID':<5}{'Amount':<12}{'Category':<15}{'Description'}")
         for i in expenses:
-            print(f"{i['id']}\t{i['amount']}\t\t{i['category']}\t\t{i['description']}")
+            print(f"{i['id']:<5}{i['amount']:<12}{i['category']:<15}{i['description']}")
    
 def UpdateExpense():
     while True:
@@ -46,12 +58,26 @@ def UpdateExpense():
         if i["id"]==searchid:
             while True:
                 try:
-                    i["amount"]=float(input("Enter your expense amount: "))
-                    break
+                    updatedamount=float(input("Enter your expense amount: "))
+                    if updatedamount>0:
+                        i["amount"] = updatedamount
+                        break
+                    else:
+                        print("Amount must be greater than 0")
                 except ValueError:
                     print("Please enter a valid number")
-            i["category"]=input("Enter the category of the expense: ")
-            i["description"]=input("Enter the description of the expense: ")
+            while True:       
+                updatedcategory=input("Enter the category of the expense: ")
+                if updatedcategory:
+                    i["category"]= updatedcategory
+                    updateddescription=input("Enter the description of the expense: ")
+                    if updateddescription:
+                        i["description"] = updateddescription
+                        break
+                    else:
+                        print("Description cannot be empty")
+                else:
+                    print("Category cannot be empty")
             print("Expense updated successfully")
             break
     else:
@@ -79,7 +105,7 @@ def ViewTotalExpenses():
         totalexpenses=0
         for i in expenses:
             totalexpenses+=i["amount"]
-        print("No expense found!")
+        print(f"Total Expenses: {totalexpenses}")
 
 def FilterbyCategory():
     found = False
