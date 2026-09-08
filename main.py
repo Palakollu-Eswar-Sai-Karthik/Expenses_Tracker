@@ -96,7 +96,7 @@ def DeleteExpense():
             print("Expense deleted successfully")
             break
     else:
-        print("Id not found")
+        print("Id not found!")
 
 def ViewTotalExpenses():
     if len(expenses)==0:
