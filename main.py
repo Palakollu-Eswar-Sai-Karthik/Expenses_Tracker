@@ -89,7 +89,7 @@ def DeleteExpense():
             searchid = int(input("Enter the id of the expense: "))
             break
         except ValueError:
-            print("Enter a valid ID")
+            print("Enter a valid ID!")
     for i in expenses:
         if i["id"]==searchid:
             expenses.remove(i)
