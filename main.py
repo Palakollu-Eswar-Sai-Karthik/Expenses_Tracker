@@ -1,45 +1,43 @@
 # import functions
-import json
+import mysql.connector
 
-# File Name
-FILE_NAME = "storage.json"
+# Creating connection
+connection = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="sk@1011",
+    database="expense_tracker"
+)
 
-# Loading json data into code
-def load_expenses():
-    try:
-        with open(FILE_NAME,"r",encoding="utf-8") as file:
-            return json.load(file) 
-    except FileNotFoundError:
-        return []
-    except json.JSONDecodeError:
-        return []
-
-# Storing the data into json
-def save_expenses():
-    with open(FILE_NAME,"w",encoding="utf-8") as file:
-        json.dump(expenses,file,indent=4)
+# Cursor is mediator btwn code and database
+cursor = connection.cursor()
 
 # All Functions
+# Loading data into code
+def load_expenses():
+    cursor.execute("select * from expenses")
+    rows = cursor.fetchall()
+    expenses = []
+    for row in rows:
+        expense = {
+            "id":row[0],
+            "amount":row[1],
+            "category":row[2],
+            "description":row[3]
+        }
+        expenses.append(expense)
+    return expenses
+
+# design 
 def design():
     for _ in range(17):
         print("=",end="")
-
-def max_id()->int:
-    max_value = 0
-    for expense in expenses:
-        if expense["id"] > max_value:
-            max_value = expense["id"]
-    return max_value
         
 def add_expense():
-    user = {}
-    id_value = max_id()
-    user["id"] = id_value + 1
     while True:
         try:
             amount = float(input("Enter your expense amount: "))
             if amount > 0:
-                user["amount"]=amount
                 break
             else:
                 print("Amount must be greater than 0")
@@ -48,19 +46,23 @@ def add_expense():
     while True:       
         category=input("Enter the category of the expense: ")
         if category:
-            user["category"] = category.lower()
+            category = category.lower()
             description=input("Enter the description of the expense: ")
             if description:
-                user["description"] = description
                 break
             else:
                 print("Description cannot be empty")
         else:
             print("Category cannot be empty")
-    expenses.append(user)
-    save_expenses()
+    query = """insert into expenses(amount,category,description)
+                values(%s,%s,%s)"""
+    values = (amount,category,description)
+    cursor.execute(query,values)
+    connection.commit()
+    print("Expense added successfully!")
     
 def view_expenses():
+    expenses = load_expenses()
     if not expenses:
         print("No expense found!")
     else:
@@ -74,19 +76,20 @@ def view_expenses():
             print(f"{expense['id']:<5}{expense['amount']:<12}{expense['category']:<15}{expense['description']}")
    
 def update_expense():
+    expenses = load_expenses()
     while True:
         try:
             searchid = int(input("Enter the id of the expense: "))
             break
         except ValueError:
             print("Enter a valid ID")
-    for i in expenses:
-        if i["id"]==searchid:
+    for expense in expenses:
+        if expense["id"]==searchid:
             while True:
                 try:
                     updatedamount=float(input("Enter your expense amount: "))
                     if updatedamount>0:
-                        i["amount"] = updatedamount
+                        expense["amount"] = updatedamount
                         break
                     else:
                         print("Amount must be greater than 0")
@@ -95,21 +98,24 @@ def update_expense():
             while True:       
                 updatedcategory=input("Enter the category of the expense: ")
                 if updatedcategory:
-                    i["category"]= updatedcategory.lower()
+                    expense["category"]= updatedcategory.lower()
                     updateddescription=input("Enter the description of the expense: ")
                     if updateddescription:
-                        i["description"] = updateddescription
+                        expense["description"] = updateddescription
                         break
                     else:
                         print("Description cannot be empty")
                 else:
                     print("Category cannot be empty")
+            query = """update expenses set amount=%s,category=%s,description=%s where id = %s"""
+            values = (expense["amount"],expense["category"],expense["description"],searchid)
+            cursor.execute(query,values)
+            connection.commit()
             print("Expense updated successfully")
             break
     else:
         print("Id not found")
-    save_expenses()
-
+    
 def delete_expense():
     while True:
         try:
@@ -117,51 +123,54 @@ def delete_expense():
             break
         except ValueError:
             print("Enter a valid ID!")
-    for expense in expenses:
-        if expense["id"]==searchid:
-            expenses.remove(expense)
-            print("Expense deleted successfully")
-            break
-    else:
-        print("Id not found!")
-    save_expenses()
+    query = "DELETE FROM expenses WHERE id = %s" 
+    values = (searchid,)
+    cursor.execute(query, values) 
+    if cursor.rowcount: 
+        connection.commit() 
+        print("Expense deleted successfully") 
+    else: print("Id not found!")
 
 def view_total_expenses():
-    if not expenses:
-        print("No expense found!")
+    query = "select sum(amount) from expenses"
+    cursor.execute(query)
+    result = cursor.fetchone()
+    if result[0] is None:
+        print('No expense found!')
     else:
-        totalexpenses=0
-        for expense in expenses:
-            totalexpenses+= expense ["amount"]
-        print(f"Total Expenses: {totalexpenses}")
+        print(f"Total Expenses: {result[0]}")
 
 def filter_by_category():
-    found = False
     search_category = input("Enter the category: ").lower()
-    for expense in expenses:
-        if expense["category"] == search_category:
-            found = True
-            print(f"{expense['id']:<5}{expense['amount']:<12}{expense['category']:<15}{expense['description']}")
-    if not found:
+    query = "select * from expenses where category = %s"
+    values = (search_category,)
+    cursor.execute(query,values)
+    rows = cursor.fetchall()
+    if not rows:
         print("No category found!")
+    else:
+        for expense in rows:
+            print(f"{expense[0]:<5}{expense[1]:<12}{expense[2]:<15}{expense[3]}")
 
 def search_expense():
-    found = False
     while True:
         search_word = input("Enter search keyword: ").lower()
         if search_word:
             break
         else:
             print("Search word cannot be empty")
-    for expense in expenses:
-        if search_word in expense["category"] or search_word in expense["description"]:
-            found = True
-            print(f"{expense['id']:<5}{expense['amount']:<12}{expense['category']:<15}{expense['description']}")
-    if not found:
+    search_pattern = f"%{search_word}%"
+    query = """select * from expenses
+                where category Like %s or description like %s
+            """
+    values = (search_pattern,search_pattern)
+    cursor.execute(query,values)
+    rows = cursor.fetchall()
+    if not rows:
         print("No matching expense found!")
-        return
-# List which contains user data
-expenses = load_expenses()
+    else:
+        for expense in rows:
+            print(f"{expense[0]:<5}{expense[1]:<12}{expense[2]:<15}{expense[3]}")
 
 while True:
     design()
